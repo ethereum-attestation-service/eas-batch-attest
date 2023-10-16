@@ -67,9 +67,18 @@ async function makeAttestations() {
   const allAttestationRequests = await buildAttestationRequests();
 
   const batches = [];
+  let nonce = await wallet.getNonce();
+
   for (let i = 0; i < allAttestationRequests.length; i += MAX_BATCH) {
     batches.push(allAttestationRequests.slice(i, i + MAX_BATCH));
   }
+
+  const estimate = await eas.multiAttest.estimateGas([
+    {
+      schema: schemaUid,
+      data: batches[0],
+    },
+  ]);
 
   for (const [index, batch] of batches.entries()) {
     console.log(
@@ -77,14 +86,20 @@ async function makeAttestations() {
         index * MAX_BATCH + 1
       } to ${(index + 1) * MAX_BATCH}`,
     );
-    const tx = await eas.multiAttest([
-      {
-        schema: schemaUid,
-        data: batch,
-      },
-    ]);
 
-    const receipt = await tx.wait();
+    const tx = await eas.multiAttest(
+      [
+        {
+          schema: schemaUid,
+          data: batch,
+        },
+      ],
+      { gasLimit: (estimate * 115n) / 100n, nonce },
+    );
+
+    nonce++;
+
+    // const receipt = await tx.wait();
     console.log(`Transaction hash: ${tx.hash}`);
   }
 }
