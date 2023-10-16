@@ -72,7 +72,11 @@ async function makeAttestations() {
   }
 
   for (const [index, batch] of batches.entries()) {
-    console.log(`Making batch ${index + 1} of ${batches.length}`);
+    console.log(
+      `Making batch ${index + 1} of ${batches.length} line numbers ${
+        index * MAX_BATCH + 1
+      } to ${(index + 1) * MAX_BATCH}`,
+    );
     const tx = await eas.multiAttest([
       {
         schema: schemaUid,
